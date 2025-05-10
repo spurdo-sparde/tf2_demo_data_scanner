@@ -1,5 +1,6 @@
 use serde_json::Value;
 use std::fs;
+use walkdir::WalkDir;
 
 fn main() {
     if std::env::args().len() != 2 {
@@ -8,12 +9,12 @@ fn main() {
     }
 
     let path = std::env::args().nth(1).expect("Missing input file path");
-    let dir = fs::read_dir(path).expect("Failed to open directory.");
-    for file in dir
+    for entry in WalkDir::new(path)
+        .into_iter()
         .filter_map(Result::ok)
-        .filter(|f| f.path().extension().and_then(|ext| ext.to_str()) == Some("json"))
+        .filter(|e| e.path().extension().and_then(|ext| ext.to_str()) == Some("json"))
     {
-        let input = fs::read_to_string(file.path()).expect("Failed to read file.");
+        let input = fs::read_to_string(entry.path()).expect("Failed to read file.");
         let json = serde_json::from_str(&input).expect("Failed to parse json.");
         get_chat_log(&json);
     }
